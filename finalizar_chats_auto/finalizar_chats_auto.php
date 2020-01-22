@@ -1,6 +1,6 @@
 <php
 <?php
-function finalizarChat($id){
+function finalizarChat($id,$token_api){
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, "https://api.huggy.io/v2/chats/".$id."/close");
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -11,14 +11,14 @@ function finalizarChat($id){
   }");
   curl_setopt($ch, CURLOPT_HTTPHEADER, array(
     "Content-Type: application/json",
-  "X-Authorization: Bearer a6af9ed744a7f4c9bc90b3f818e0e41b"
+  "X-Authorization: Bearer ".$token_api
 ));
 $response = curl_exec($ch);
 curl_close($ch);
 var_dump($response);
 }
 
-
+function finalizar_chat_auto($token_api, $data_inicio, $data_final, $id_agente){
 $num = 0;
 $response = "vazio";
 while(!empty($response)){
@@ -28,7 +28,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 curl_setopt($ch, CURLOPT_HEADER, FALSE);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
   "Content-Type: application/json",
-  "X-Authorization: Bearer a6af9ed744a7f4c9bc90b3f818e0e41b"
+  "X-Authorization: Bearer ".$token_api
 ));
 $response = curl_exec($ch);
 curl_close($ch);
@@ -36,10 +36,12 @@ $atendimentos = json_decode($response);
 for($i=0; $i < count($atendimentos); $i++){
   $dado = $atendimentos[$i]->closedAt;
   echo $dado;
-  if($atendimentos[$i]->closedAt == ""){
-      $id = $atendimentos[$i]->id;
-      echo "id";
-      finalizarChat($id);
+  if($atendimentos[$i]->agentId == null && $atendimentos[$i]->queueNumber == null){
+      if($atendimentos[$i]->createdAt >= $data_inicio && $atendimentos[$i]->createdAt =< $data_final){
+          $id = $atendimentos[$i]->id;
+          echo "id";
+          finalizarChat($id, $token_api);
+        }
   }
 }
 if(empty($response)){
@@ -47,4 +49,5 @@ if(empty($response)){
 }
 curl_close($ch);
 $num++;
+}
 }
